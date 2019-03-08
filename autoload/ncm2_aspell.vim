@@ -11,7 +11,7 @@ let g:ncm2_aspell#proc = yarp#py3({
 let g:ncm2_aspell#source = extend(get(g:, 'ncm2_aspell#source', {}), {
             \ 'name': 'aspell',
             \ 'ready': 0,
-            \ 'priority': 8,
+            \ 'priority': 2,
             \ 'mark': 's',
             \ 'on_complete': 'ncm2_aspell#on_complete',
             \ 'on_warmup': 'ncm2_aspell#on_warmup',
