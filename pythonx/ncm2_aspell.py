@@ -35,7 +35,7 @@ class Source(Ncm2Source):
         if spell:
             shell_command = 'aspell -d {lang} dump master | aspell -l {lang} expand'.format(lang=spelllang)
             p = subprocess.run(shell_command, shell=True, capture_output=True)
-            self.dictionary = p.stdout.decode('utf8').split('\n')
+            self.dictionary = p.stdout.decode('utf8').split()
             self.dictionary = sorted(self.dictionary, key=lambda x: x.lower())
         logger.info('dictionary size = %s', len(self.dictionary))
 
