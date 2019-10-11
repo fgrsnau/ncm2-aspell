@@ -23,36 +23,45 @@ def binary_search(collection, word):
 
 class Source(Ncm2Source):
 
-    def on_warmup(self, ctx):
-        bufnr = ctx['bufnr']
-        logger.info('on_warmup for buffer %s', bufnr)
-
-        spell = self.nvim.eval('&spell')
-        spelllang = self.nvim.eval('&spelllang')
-        logger.info('spell=%s spelllang=%s', spell, spelllang)
-
+    def __init__(self, ctx):
+        super().__init__(ctx)
+        self.spelllang = None
         self.dictionary = []
-        if spell:
-            shell_command = 'aspell -d {lang} dump master | aspell -l {lang} expand'.format(lang=spelllang)
-            p = subprocess.run(shell_command, shell=True, capture_output=True)
-            self.dictionary = p.stdout.decode('utf8').split()
-            self.dictionary = sorted(self.dictionary, key=lambda x: x.lower())
-        logger.info('dictionary size = %s', len(self.dictionary))
+
+    def on_warmup(self, ctx):
+        self.update_dictionary()
 
     def on_complete(self, ctx):
+        self.update_dictionary()
+
         base = ctx['base']
-        logger.debug('on_complete -> base=%s', base)
         matcher = self.matcher_get(ctx['matcher'])
         matches = []
         idx = binary_search(self.dictionary, base)
         if idx < 0 or idx >= len(self.dictionary):
             return
-        logger.debug('base=%s idx=%s word=%s', base, idx, self.dictionary[idx])
         for word in self.dictionary[idx:idx+100]:
             item = self.match_formalize(ctx, word)
             if matcher(base, item):
                 matches.append(item)
         self.complete(ctx, ctx['startccol'], matches, True)
+
+    def update_dictionary(self):
+        spell = self.nvim.eval('&spell')
+        if spell:
+            spelllang = self.nvim.eval('&spelllang')
+        else:
+            spelllang = None
+
+        if self.spelllang != spelllang:
+            self.spelllang = spelllang
+            if spelllang is None:
+                self.dictionary = []
+            else:
+                shell_command = 'aspell -d {lang} dump master | aspell -l {lang} expand'.format(lang=spelllang)
+                p = subprocess.run(shell_command, shell=True, capture_output=True)
+                self.dictionary = p.stdout.decode('utf8').split()
+                self.dictionary = sorted(self.dictionary, key=lambda x: x.lower())
 
 
 source = Source(vim)
